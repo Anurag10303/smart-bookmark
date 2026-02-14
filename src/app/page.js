@@ -26,7 +26,13 @@ export default function Home() {
           console.log("Realtime:", payload);
 
           if (payload.eventType === "INSERT") {
-            setBookmarks((prev) => [payload.new, ...prev]);
+            setBookmarks((prev) => {
+              // prevent duplicates
+              if (prev.some((b) => b.id === payload.new.id)) {
+                return prev;
+              }
+              return [payload.new, ...prev];
+            });
           }
 
           if (payload.eventType === "DELETE") {
