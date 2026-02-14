@@ -11,40 +11,57 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    checkUser();
+    const setup = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    const channel = supabase
-      .channel("bookmarks-channel")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "bookmarks",
-        },
-        (payload) => {
-          console.log("Realtime:", payload);
+      if (!user) {
+        router.push("/login");
+        return;
+      }
 
-          if (payload.eventType === "INSERT") {
-            setBookmarks((prev) => {
-              // prevent duplicates
-              if (prev.some((b) => b.id === payload.new.id)) {
-                return prev;
-              }
-              return [payload.new, ...prev];
-            });
-          }
+      setUser(user);
+      await fetchBookmarks();
 
-          if (payload.eventType === "DELETE") {
-            setBookmarks((prev) => prev.filter((b) => b.id !== payload.old.id));
-          }
-        },
-      )
-      .subscribe();
+      const channel = supabase
+        .channel("bookmarks-channel")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "bookmarks",
+          },
+          (payload) => {
+            console.log("Realtime:", payload);
 
-    return () => {
-      supabase.removeChannel(channel);
+            if (payload.eventType === "INSERT") {
+              setBookmarks((prev) => {
+                if (prev.some((b) => b.id === payload.new.id)) {
+                  return prev;
+                }
+                return [payload.new, ...prev];
+              });
+            }
+
+            if (payload.eventType === "DELETE") {
+              setBookmarks((prev) =>
+                prev.filter((b) => b.id !== payload.old.id),
+              );
+            }
+          },
+        )
+        .subscribe((status) => {
+          console.log("Realtime status:", status);
+        });
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     };
+
+    setup();
   }, []);
 
   const checkUser = async () => {

@@ -64,7 +64,8 @@ export default function AddBookmark({ onBookmarkAdded }) {
       console.log(error);
       return;
     }
-
+    console.log("Callback:", onBookmarkAdded);
+    console.log("Insert data:", data);
     setTitle("");
     setUrl("");
   };
