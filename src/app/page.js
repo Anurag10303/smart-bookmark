@@ -79,7 +79,16 @@ export default function Home() {
         <p className="text-center text-gray-500 mb-8">
           Save and manage your favorite links
         </p>
-        <AddBookmark />
+        <AddBookmark
+          onBookmarkAdded={(newBookmark) =>
+            setBookmarks((prev) => {
+              if (prev.some((b) => b.id === newBookmark.id)) {
+                return prev;
+              }
+              return [newBookmark, ...prev];
+            })
+          }
+        />
         <BookmarkList
           bookmarks={bookmarks}
           onBookmarkDeleted={(id) =>

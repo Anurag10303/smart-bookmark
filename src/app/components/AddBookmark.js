@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function AddBookmark() {
+export default function AddBookmark({ onBookmarkAdded }) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
 
@@ -47,14 +47,19 @@ export default function AddBookmark() {
       alert("Please enter a valid URL");
       return;
     }
-    const { error } = await supabase.from("bookmarks").insert([
-      {
-        title,
-        url: formattedUrl,
-        user_id: user.id,
-      },
-    ]);
-
+    const { data, error } = await supabase
+      .from("bookmarks")
+      .insert([
+        {
+          title,
+          url: formattedUrl,
+          user_id: user.id,
+        },
+      ])
+      .select();
+    if (!error && data) {
+      onBookmarkAdded?.(data[0]);
+    }
     if (error) {
       console.log(error);
       return;
